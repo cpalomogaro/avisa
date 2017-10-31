@@ -1,0 +1,497 @@
+---
+title: "Análisis del conjunto de datos abiertos AVISA del ayuntamiento de
+Madrid"
+author: "Cristina Palomo Garo"
+date: '`r format(Sys.Date(), "%d de %B de %Y")`'
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    theme: united
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(xts)
+library(dygraphs)
+library(reshape2)
+library(ggmap)
+library(knitr)
+library(OIsurv)
+library(survival)
+library(survminer)
+library(ranger)
+library(ggmap)
+```
+  
+# Introducción  
+
+## LíneaMadrid  
+LíneaMadrid comenzó a funcionar en 1999 y depende de la Subdirección General de Atención a la Ciudadanía, Servicio de Implantación y Seguimiento.  
+Es el método de comunicación entre los ciudadanos y el Ayuntamiento de Madrid, donde se centralizan diferentes servicios desde la notificación de desperfectos en el alumbrado, recogida de basuras, entrega y solicitud de impresos... hasta el servicio público de alquiler de bicicletas BiciMad o el Servicio de Estacionamiento Regulado (SER).  
+Se puede contactar con LíneaMadrid a través del teléfono 010 (91 529 82 10 si se llama desde fuera de Madrid), la página web [www.madrid.es/lineamadrid](www.madrid.es/lineamadrid) o incluso Twitter (@Lineamadrid).  
+
+## Datos abiertos del Ayuntamiento de Madrid 
+En el Portal de datos abiertos del Ayuntamiento de Madrid se puede encontrar el registro de los avisos recibidos por LíneaMadrid desde el año 2014 hasta la actualidad, aunque existen avisos notificados con anterioridad, pero resueltos a partir de 2014 [Datos abiertos AVISA](http://datos.madrid.es/sites/v/index.jsp?vgnextoid=fd6112695c6bb410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD)  
+Consta de dos datasets en formato .csv, uno recoge todos los avisos recibidos y el otro, los avisos resueltos. La publicación de los datos se realiza con una periodicidad anual, excepto para el año en curso, cuya publicación es mensual.  
+Para el presente trabajo, se han unido los datasets de avisos resueltos de 2014, 2015, 2016 y 2017 (hasta agosto) en un dataset al que llamaremos *'recibidos'* y en otro dataset al que llamaremos 'resueltos' los avisos resueltos en 2014, 2015, 2016 y 2017 (hasta agosto). Deduciendo que los avisos sin resolver serán aquellos que aparecen en el dataset *'recibidos'* pero no en *'resueltos'* y recogeremos en el dataset 'sinresolver'.  
+En estos datasets se incluye información muy extensa:  
+
+  * Tipo de incidencia; si es un aviso, petición o no conforme  
+  * Canal de entrada; vía presencial/telefónica, web, app o sugerencias  
+  * Horas de recepción y resolución (si la hubiere)  
+  * Sección a la que pertenece el aviso  
+  * Tipificación de la anomalía  
+  * Dirección  
+  * Barrio y distrito donde se localiza el aviso
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+## Carga de los datasets: (Puede verse el proceso de limpieza de los datasets en ../src/obtencionInformacion.R)
+recibidos <- readRDS('../res/recibidos.rds')
+resueltos <- readRDS('../res/resueltos.rds')
+sinresolver <- readRDS('../res/sinresolver.rds')
+recibidos <- recibidos %>% 
+  mutate(FECHA_DE_RECEPCION = as.Date(FECHA_DE_RECEPCION, format= '%Y-%m-%d')) 
+resueltos <- resueltos %>% 
+  mutate(FECHA_DE_RECEPCION = as.Date(FECHA_DE_RECEPCION, format = '%Y-%m-%d'),
+         FECHA_DE_RESOLUCION = as.Date(FECHA_DE_RESOLUCION, format = '%Y-%m-%d'))
+sinresolver <- sinresolver %>% 
+  mutate(FECHA_DE_RECEPCION = as.Date(FECHA_DE_RECEPCION, format= '%Y-%m-%d'))
+
+ID_anomalia <- read.csv('../res/ID_anomalia.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+ID_seccion <- read.csv('../res/ID_seccion.csv', sep = ',', header = TRUE , fileEncoding = 'latin1')
+ID_tipoincidencia <- read.csv('../res/ID_tipoincidencia.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+ID_barrio <- read.csv('../res/ID_barrio.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+ID_canal <- read.csv('../res/ID_canal.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+ID_distrito <- read.csv('../res/ID_distrito.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+ID_organismo1 <- read.csv('../res/ID_Organismo1.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+ID_organismo2 <- read.csv('../res/ID_Organismo2.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+ID_organismo3 <- read.csv('../res/ID_Organismo3.csv', sep = ',', header = TRUE, fileEncoding = 'latin1')
+```
+
+  
+#Análisis descriptivo 
+##Descripción del servicio  
+### Flujo de comunicaciones
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+tmp <- recibidos %>%
+  select(FECHA_DE_RECEPCION) %>% 
+  mutate(FECHA_DE_RECEPCION = as.Date(FECHA_DE_RECEPCION), format= '%yyyy/%MM/%dd') %>% 
+  group_by(FECHA_DE_RECEPCION) %>% 
+  count()
+colnames(tmp)[colnames(tmp) == 'n'] <- 'numero_de_avisos'
+
+tmp02 <- tmp %>%
+  select(FECHA_DE_RECEPCION, numero_de_avisos) %>% 
+  mutate(ano = format(FECHA_DE_RECEPCION, '%Y')) %>%
+  group_by(ano) %>% 
+  summarise(numero_de_avisos=sum(numero_de_avisos))
+```
+
+En este servicio se reciben alrededor de 475000 avisos al año.  
+```{r, echo=FALSE, results='asis'}
+kable(tmp02, col.names = c('año', 'número de avisos'), format = 'markdown') 
+```
+---  
+
+Para tener una visión general del flujo de notificaciones, se representa el número total de avisos durante los casi 4 años de estudio:  
+```{r, echo=FALSE}
+tmp <- xts(tmp, order.by = tmp$FECHA_DE_RECEPCION)
+p1 <- dygraph(tmp) %>%
+  dyAxis("y", label = "Número de avisos") %>% 
+  dyLegend(show = "onmouseover", hideOnMouseOut = TRUE, labelsSeparateLines = TRUE) %>% 
+  dyRangeSelector()
+p1 
+```
+  
+Se podría decir que se observa una cierta estacionalidad, con un aumento del número de avisos durante los meses de julio y septiembre. Aunque el día 30 de marzo de 2016 rompe esta tendencia con un nivel muy alto de avisos, hecho que se explicará más adelante.  
+  
+Si tenemos en cuenta el canal que utilizan los ciudadanos para comunicarse con LíneaMadrid, la mayoritaria con diferencia es la presencial o telefónica, mientras que las demás tienen un uso residual.
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+tmp <- recibidos %>%
+  select(CANAL_DE_ENTRADA_ID) %>% 
+  group_by(CANAL_DE_ENTRADA_ID) %>% 
+  count()
+colnames(tmp)[colnames(tmp) == 'n'] <- 'numero_de_avisos'
+tmp <- merge(tmp, ID_canal, by= 'CANAL_DE_ENTRADA_ID')
+p2 <- ggplot(tmp, aes(x = CANAL_DE_ENTRADA, y = numero_de_avisos, fill= CANAL_DE_ENTRADA)) +
+  geom_bar(stat = 'identity') + scale_fill_brewer(palette = "Blues") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  guides(fill=FALSE)
+p2
+```
+Respecto a las horas de mayor flujo de comunicaciones, aparece un máximo de actividad entre las 8 y las 11 de la mañana, con una disminución hasta las 19 horas, donde aparece otro pico, aunque menor. Este patrón se repite tanto en los avisos telefónicos o presenciales y en los realizados a través de la aplicación móvil.
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+tmp <- recibidos %>% 
+  select(CANAL_DE_ENTRADA_ID, HORA_DE_RECEPCION)
+ 
+tmp$HORA_DE_RECEPCION <- strptime(tmp$HORA_DE_RECEPCION, format = '%H:%M:%S')
+tmp$cut15 <- cut(tmp$HORA_DE_RECEPCION, breaks = "15 min")
+
+tmp <- tmp %>%
+  select(CANAL_DE_ENTRADA_ID, cut15) %>% 
+  group_by(CANAL_DE_ENTRADA_ID, cut15) %>% 
+  count()
+tmp <- merge(tmp, ID_canal, by = 'CANAL_DE_ENTRADA_ID')
+tmp$Hora <- format(strptime(tmp$cut15, format = '%Y-%m-%d %H:%M:%S'), '%H:%M')
+colnames(tmp)[colnames(tmp) == 'n'] <- 'numero_de_avisos'
+
+p3 <- ggplot(tmp, aes(x = Hora, y = numero_de_avisos, group = CANAL_DE_ENTRADA)) + geom_line(aes(color=CANAL_DE_ENTRADA)) + scale_x_discrete(breaks=c("00:00","04:00", "08:00","12:00", "16:00", "20:00", "23:45"))
+p3
+```
+  
+La mayoría de los avisos se reciben los lunes, disminuyendo a lo largo de la semana, y cayendo drásticamente durante el fin de semana
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+tmp <- recibidos %>%
+  select(FECHA_DE_RECEPCION, CANAL_DE_ENTRADA_ID, weekday) %>% 
+  group_by(CANAL_DE_ENTRADA_ID, weekday) %>%
+  count() 
+tmp <- merge(tmp, ID_canal, by = 'CANAL_DE_ENTRADA_ID')
+colnames(tmp)[colnames(tmp) == 'n'] <- 'numero_de_avisos'
+colnames(tmp)[colnames(tmp) == 'weekday'] <- 'dia_de_la_semana'
+
+tmp$dia_de_la_semana <- factor(tmp$dia_de_la_semana, levels = c('lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'))
+tmp <- tmp[order(tmp$dia_de_la_semana),]
+p4 <- ggplot(tmp, aes(x = dia_de_la_semana, y = numero_de_avisos, group = CANAL_DE_ENTRADA)) + geom_line(aes(color=CANAL_DE_ENTRADA)) 
+p4
+```
+  
+### Línea Madrid en función de sus servicios  
+
+LíneaMadrid clasifica los avisos que recibe en secciones y tipo de anomalía, para que posteriormente la organización adecuada se encargue de solucionarlos. Las secciones más demandadas en estos casi 4 años han sido las bicicletas de BiciMad, la recogida de muebles, la limpieza de pintadas, el Servicio de Estacionamiento Regulado SER, entre otras. En el siguiente gráfico se pueden ver las 11 secciones más demandadas:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10}
+tmp <- recibidos %>% 
+  group_by(SECCION_ID) %>% 
+  count() 
+tmp <- merge(tmp, ID_seccion, by = 'SECCION_ID')
+tmp <- tmp %>% top_n(11, wt=n)  
+g1 <- ggplot(tmp, aes(x = reorder(SECCION, -n), y = n, fill= reorder(SECCION, -n))) + 
+  geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  guides(fill=FALSE)
+g1
+```
+  
+De hecho, las incidencias que recibe el teléfono 010 sobre el servicio BiciMad, no se resuelven allí directamente, si no que son derivadas a otro teléfono específico.  
+Teniendo en cuenta las 11 secciones con mayor demanda, podemos observar que el servicio de recogida de muebles ha aumentado mucho a lo largo de los años y que las incidencias referentes a la reparación o reposición de cubos de basura son abundantes durante todas las épocas del año y con unos niveles bastante homogéneos.  
+Al igual que ocurría con el nivel de avisos totales, aquí también observamos una cierta estacionalidad. Dependiendo de la época del año en la que nos encontremos, se reciben más avisos de determinada sección, y esta situación es cíclica. Por ejemplo, en primavera se reciben más avisos referentes a arbolado viario, o más avisos sobre zonas verdes y bocas de riego en verano y más avisos relacionados con el pavimento en invierno. Parece que Madrid se ve afectada con los cambios de estación a la vista de estos resultados y podrían ser útiles para predecir los efectivos necesarios en cada sección dependiendo de la época del año
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height= 3, fig.width= 3}
+tmp <- recibidos %>% 
+  select(FECHA_DE_RECEPCION, SECCION_ID) %>%
+  mutate(FECHA_DE_RECEPCION = format(FECHA_DE_RECEPCION, '%Y-%m-%d')) %>%
+  filter(SECCION_ID == 2 | SECCION_ID == 5 | SECCION_ID == 22 | SECCION_ID == 33 |
+           SECCION_ID == 34 | SECCION_ID == 41 | SECCION_ID == 42 | SECCION_ID == 46 |
+           SECCION_ID == 57 | SECCION_ID == 59 | SECCION_ID == 65) %>% 
+  group_by(FECHA_DE_RECEPCION, SECCION_ID) %>% 
+  count()
+tmp <- merge(tmp, ID_seccion, by = 'SECCION_ID')
+
+graficas <- function(seccion){
+  tmp <- tmp %>%
+    mutate(FECHA_DE_RECEPCION = as.Date(FECHA_DE_RECEPCION, '%Y-%m-%d')) %>% 
+    filter(SECCION_ID == seccion)
+
+g <- ggplot(tmp, aes(x = FECHA_DE_RECEPCION, y = n, group= SECCION)) + geom_line() + labs(title=tmp$SECCION,
+        x ="Fecha", y = "Número de avisos/día") + theme(plot.title = element_text(size=6)) + scale_x_date()
+print(g)  
+}
+par(mfrow = c(2, 2))
+graficas(2)
+graficas(22) 
+graficas(5)
+graficas(33)
+graficas(34)
+graficas(41)
+graficas(42)
+graficas(46)
+graficas(57)
+graficas(59)
+graficas(65)
+```
+  
+También en estas gráficas se puede observar cómo la sección de alumbrado recibe más avisos en la época de otoño-invierno, parece normal teniendo que es la época del año con menos horas de luz solar, pero que en los últimos dos años han disminuido y se han estabilizado el número de avisos de esta sección. Quizá se justifique con el hecho de que a partir de 2015 el Ayuntamiento, en una decisión [no exenta de polémica actualmente](https://www.elconfidencial.com/espana/madrid/2017-02-16/ana-botella-fiscalia-contrato-bombilla-investigacion_1332613/), comenzara a cambiar las luminarias de la ciudad por otras de tipo LED.  
+Si nos fijamos en la gráfica correspondiente al vaciado de cubos de basura, podemos observar que, salvo picos puntuales, no es un servicio que demanden demasiado los ciudadanos. ¿Por qué se nos ha _colado_ entre las 11 secciones más demandadas entonces? pues por un pico de más de 1000 avisos, muy por encima de lo habitual, ocurrido el 30 de marzo de 2016.  
+
+#### ¿Qué pasó el 30 de marzo de 2016?  
+Analizando más profundamente los avisos de ese día, prácticamente todos son reclamaciones de vecinos de la zona noroeste de la ciudad, Barrio del Pilar, Peñagrande... para que se vacíen los cubos de basura. "Buceando" en la hemeroteca nos encontramos que esa fecha los trabajadores de la empresa de recogida de basuras encargada de estos trabajos, estaba llevando a cabo una [huelga encubierta](http://www.elmundo.es/madrid/2016/03/31/56fd1700268e3e45228b4689.html).  
+
+#### ¿Dónde van a parar las bicicletas de BiciMad?  
+
+Un hecho en el que se ha querido profundizar, es en el robo y abandono de bicicletas de BiciMad. Aprovechando que los anclajes que sujetan las bicis a las estaciones no funcionan a la perfección, es habitual la sustracción de estos vehículos que suelen ser abandonados en la vía pública cuando la batería se acaba o los _usuarios oportunistas_ se cansan de ellas.  
+Aquí se han cartografiado las localizaciones donde han aparecido repetidas veces (más de 3) estas bicicletas. 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# El proceso para obtener las localizaciones es algo largo, por lo que el código se puede consultar en '../src/BiciMad.R'. Al final guardo el resultado en un csv que leo a continuación:
+tmp <- read.csv('../res/latlon_bicirobada.csv', header = TRUE, fileEncoding = 'latin1')
+
+madrid <- c(lon = -3.702234, lat = 40.48) #coordenadas para madrid
+madrid_map <- get_map(madrid, maptype = 'roadmap', zoom = 11) 
+
+ggmap(madrid_map, extent = 'device') +
+  geom_point(data = tmp, aes(x = lon, y = lat, size = sqrt(tmp$num_veces)), alpha = .2)
+```
+
+---
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+madrid02 <- c(lon = -3.702234, lat = 40.4835) #coordenadas para madrid
+madrid_map02 <- get_map(madrid02, maptype = 'roadmap', zoom = 13) 
+
+ggmap(madrid_map02, extent = 'device') +
+  geom_point(data = tmp, aes(x = lon, y = lat, size = sqrt(tmp$num_veces)), alpha = .2)
+
+madrid03 <- c(lon = -3.702234, lat = 40.4) #coordenadas para madrid
+madrid_map03 <- get_map(madrid03, maptype = 'roadmap', zoom = 13) 
+
+ggmap(madrid_map03, extent = 'device') +
+  geom_point(data = tmp, aes(x = lon, y = lat, size = sqrt(tmp$num_veces)), alpha = .2)
+```
+  
+Estas bicicletas han aparecido en localidades tan alejadas de la almendra central como Las Rozas, Alcorcón o Barajas.  
+
+
+## Los avisos que quedan sin resolver  
+
+Pese a que de los 1731444 avisos recibidos entre enero de 2014 a julio de 2017 se han quedado sin resolver 133187 (el 7,69%), en la siguiente gráfica podemos ver la acumulación de avisos pendientes porque se notifican más avisos al día de los que se resuelven en ese mismo día  
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+recibidos02 <- recibidos %>% 
+  select(FECHA_DE_RECEPCION, SECCION_ID, ANOMALIA_ID) %>% 
+  group_by(FECHA_DE_RECEPCION) %>% 
+  count()
+
+resueltos02 <- resueltos %>% 
+  select(FECHA_DE_RECEPCION, SECCION_ID, ANOMALIA_ID) %>% 
+  group_by(FECHA_DE_RECEPCION) %>% 
+  count()
+
+recibidos02$FECHA_DE_RECEPCION <- as.Date(recibidos02$FECHA_DE_RECEPCION, format = "%Y-%m-%d")
+recibidos02 <- recibidos02[order(recibidos02$FECHA_DE_RECEPCION),]
+recibidos_xts <- xts(recibidos02, order.by = recibidos02$FECHA_DE_RECEPCION)
+
+resueltos02$FECHA_DE_RECEPCION <- as.Date(resueltos02$FECHA_DE_RECEPCION, format = "%Y-%m-%d")
+resueltos02 <- resueltos02[order(resueltos02$FECHA_DE_RECEPCION),]
+resueltos_xts <- xts(resueltos02, order.by = resueltos02$FECHA_DE_RECEPCION)
+
+ambos <- cbind(recibidos_xts, resueltos_xts)
+ambos <- as.data.frame(ambos)
+
+ambos$n <- as.numeric(ambos$n)
+ambos$n.1 <- as.numeric(ambos$n.1)
+
+ambos[is.na(ambos)] <- 0 
+
+ambos$pendientes <- cumsum(ambos$n.1 - ambos$n)
+
+ambos$FECHA_DE_RECEPCION.1 <- as.Date(ambos$FECHA_DE_RECEPCION.1, format = '%Y-%m-%d')
+tmp <- xts(ambos$pendientes, order.by = ambos$FECHA_DE_RECEPCION.1)
+plot(tmp, main = "Avisos pendientes de resolución" ,
+     ylab = "cola de pendientes")
+```
+  
+Y estas son las secciones con más avisos pendientes de resolver
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+tmp <- sinresolver %>% 
+  select(SECCION_ID) %>% 
+  group_by(SECCION_ID) %>% 
+  count()
+tmp <- merge(tmp, ID_seccion, by = 'SECCION_ID')
+tmp <- tmp %>% top_n(11, wt=n) 
+
+g1 <- ggplot(tmp, aes(x = reorder(SECCION, -n), y = n, fill= reorder(SECCION, -n))) + 
+  geom_bar(stat = 'identity') + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill=FALSE)
+g1
+```
+  
+Existen casos en los que la incidencia se ha resuelto después de 1975 días abierta, perteneciente a la sección de pavimento, y esa incidencia en cuestión se cerró el mismo días que otras de la mismo índole. Es lógico agrupar el mismo tipo de incidencias y resolverlas a la vez, y además la solución a veces pasa por estudios urbanísticos o la concesión de permisos... Para ahondar en el tiempo que tardan en resolverse las incidencias, vamos a aplicar modelos estadísticos de supervivencia.  
+
+
+# Modelos de supervivencia  
+
+Los modelos estadísticos de análisis de supervivencia se utilizan extensamente en los campos de la medicina y la biología, para el estudio de la mortalidad entre distintas mutaciones del mismo tipo de cáncer y cómo afecta determinado tratamiento a esa mortalida, si determinada población es más vulnerable a una enfermedad, o incluso en viabilidad de plantas o propagación de semillas.  
+Aquí lo aplicaremos al estudio del tiempo que tardan las incidencias en ser resueltas y cómo afectan las diferentes variables a este tiempo de resolución.  
+La función de supervivencia indica la probabilidad de que un individuo sobreviva (o que determinado evento no ocurra) y depende del tiempo  
+Lo primero que debemos hacer es clasificar nuestras incidencias en resueltas con un 1 (lo que en supervivencia sería un individuo fallecido), o si siguen abiertas y sin resolverse, con un 0 (es decir, que sobreviven). 
+
+## Modelo de Kaplan-Meier  
+
+La curva de Kaplan-Meier representa la función de supervivencia, mostrando la probabilidad de supervivencia acumulada a través del tiempo. Es útil cuando se estudian dos grupos, o nuestro conjunto en total  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# El proceso está detallado en '../res/supervivencia.R'
+resueltos$COORDENADA_OFICIAL_X <- resueltos$COORDENADA_OFICIAL_Y <- resueltos$FECHA_DE_RECEPCION <- resueltos$FECHA_DE_RESOLUCION <- NULL
+resueltos$weekdayResolucion <- resueltos$HORA_DE_RECEPCION <- resueltos$HORA_DE_RESOLUCION <- resueltos$direccion <- NULL
+sinresolver$COORDENADA_OFICIAL_X <- sinresolver$COORDENADA_OFICIAL_Y <- sinresolver$FECHA_DE_RECEPCION <- sinresolver$direccion <- sinresolver$HORA_DE_RECEPCION <- NULL
+
+resueltos$solucionado <- 1
+sinresolver$solucionado <- 0 
+colnames(sinresolver)[colnames(sinresolver) == 'tiempo_sin_resolver'] <- 'tiempo'
+colnames(resueltos)[colnames(resueltos) == 'tiempo_de_resolucion'] <- 'tiempo'
+total <- rbind(resueltos, sinresolver)
+total <- merge(total, ID_seccion, by= 'SECCION_ID')
+total$tiempo <- as.numeric(total$tiempo)
+total <- total[!is.na(total$tiempo),]
+
+#Por problemas de memoria, escojo una muestra aleatoria de 5000 entradas 
+set.seed(1234)
+tmp <- sample_n(total, 5000)
+
+kaplan <- Surv(tmp$tiempo, tmp$solucionado)
+
+fit_kaplan <- survfit(kaplan ~ 1)
+
+ggsurvplot(fit_kaplan, main = 'Kaplan Meyer Plot') + labs(
+  x = "Tiempo (días)",
+  y    = "Probabilidad de no ser resuelta"
+)
+```
+  
+Pero no es demasiado visual cuando tenemos muchas variables, como la sección en nuestro caso.
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+fit02 <- survfit(Surv(tiempo, solucionado) ~ SECCION, data=tmp)
+ggsurvplot(fit02, pval=TRUE, 
+           main="Kaplan-Meier para tiempo de resolucion") + labs(
+             x = "Tiempo (días)",
+             y    = "Probabilidad de no ser resuelta"
+           )
+```
+
+## Modelo de riesgos proporcionales (PH) o regresión de Cox
+Esta es la aproximación más común para evaluar el efecto de diferentes variables sobre la supervivencia, teniendo en cuenta que exp(coef) se encuentra entre 0 y 1  
+
+  * HR = 1: No tiene efecto
+  * HR >1: disminuye el tiempo de resolución
+  * HR <1: aumenta el tiempo de resolución  
+  
+En primera instancia, medimos el efecto de la variable SECCION
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+cox <- coxph(Surv(tiempo, solucionado) ~ SECCION, data=tmp)
+summary(cox)
+cox_fit <- survfit(cox)
+```
+  
+Si miramos el efecto de todas las variables
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+cox_total <- coxph(Surv(tiempo, solucionado) ~ SECCION + TIPO_INCIDENCIA_ID + CANAL_DE_ENTRADA_ID +
+ANOMALIA_ID + DISTRITO_ID + BARRIO_ID + weekday, data=tmp)
+cox_total
+cox_total_fit <- survfit(cox_total)
+
+#observaciones no independientes mediante clustering
+
+mod4 <- coxph(Surv(tiempo, solucionado) ~ TIPO_INCIDENCIA_ID + CANAL_DE_ENTRADA_ID +
+                 ANOMALIA_ID + DISTRITO_ID + BARRIO_ID + weekday + cluster(SECCION), data=tmp)
+mod4_fit <- survfit(mod4)
+```
+  
+##Random Forest aplicado al análisis de supervivencia  
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+r_fit_bmt <- ranger(Surv(tiempo, solucionado) ~ SECCION + TIPO_INCIDENCIA_ID + CANAL_DE_ENTRADA_ID + 
+                      ANOMALIA_ID + DISTRITO_ID + BARRIO_ID + weekday, 
+                    data=tmp,
+                    importance = "permutation")
+
+# # media
+death_times <- r_fit_bmt$unique.death.times
+surv_prob <- data.frame(r_fit_bmt$survival)
+avg_prob <- sapply(surv_prob,mean)
+```
+
+Obtenemos la importancia de cada variable en nuestro caso. Parece que la variable que determinará el tiempo de resolución de la incidencia será el tipo de anomalía, seguido de la sección a la que pertenezca. Existe cierta dependencia del lugar donde se haya generado la incidencia, ya que el barrio y el distrito ocupan el tercer y cuarto lugar en importancia respectivamente
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+# # Pinta para cada una de las incidencias
+plot(r_fit_bmt$unique.death.times,r_fit_bmt$survival[1,], type = "l", 
+     ylim = c(0,1),
+     col = "red",
+     xlab = "death times",
+     ylab = "sin resolver",
+     main = "Curvas de supervivencia")
+
+for(n in c(2:137)){
+  lines(r_fit_bmt$unique.death.times, r_fit_bmt$survival[n,], type = "l", col = "red")
+}
+lines(death_times, avg_prob, lwd = 2)
+
+vi <- data.frame(sort(round(r_fit_bmt$variable.importance, 4), decreasing = TRUE))
+
+kable(head(vi), col.names = c('Importancia'), format = 'markdown')
+
+```
+  
+## Comparación de los modelos:  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Represento la curvas de supervivencia
+km <- rep("KM", length(fit_kaplan$time))
+km_df <- data.frame(fit_kaplan$time,fit_kaplan$surv,km)
+names(km_df) <- c("Tiempo","Supervivencia","Modelo")
+
+cox <- rep("Cox",length(cox_fit$time))
+cox_df <- data.frame(cox_fit$time,cox_fit$surv,cox)
+names(cox_df) <- c("Tiempo","Supervivencia","Modelo")
+
+cox_total <- rep("Cox_total",length(cox_total_fit$time))
+cox_total_df <- data.frame(cox_total_fit$time,cox_total_fit$surv,cox_total)
+names(cox_total_df) <- c("Tiempo","Supervivencia","Modelo")
+# mod3 <- rep("mod3",length(mod3_fit$time))
+# mod3_df <- data.frame(mod3_fit$time,mod3_fit$surv,mod3)
+# names(mod3_df) <- c("Tiempo","Supervivencia","Modelo")
+
+mod4 <- rep("Cox_cluster",length(mod4_fit$time))
+mod4_df <- data.frame(mod4_fit$time,mod4_fit$surv,mod4)
+names(mod4_df) <- c("Tiempo","Supervivencia","Modelo")
+
+rf <- rep("RF",length(r_fit_bmt$unique.death.times))
+rf_df <- data.frame(r_fit_bmt$unique.death.times,avg_prob,rf)
+names(rf_df) <- c("Tiempo","Supervivencia","Modelo")
+
+plot_df <- rbind(km_df, cox_df, cox_total_df, mod4_df, rf_df)
+p <- ggplot(plot_df, aes(x = Tiempo, y = Supervivencia, color = Modelo))
+p + geom_line() + ggtitle("Comparación de los modelos de supervivencia")
+```
+  
+
+  
+Los modelos de Kaplan-Meier, Cox y Cox modificado por clustering para la sección obtienen resultados parecidos.  
+El modelo de Cox en el que se tienen en cuenta todas las variables no se parece en nada a los anteriores ni a la curva del conjunto real, ya que estima un retardo en la resolución de los avisos mucho mayor que la que existe en realidad.  
+El modelo de random forest por el contrario, estima unos niveles de supervivencia o de tardanza en cerrar las incidencias mayor que los modelos de Kaplan-Meier y Cox.  
+
+# Siguientes pasos  
+
+  * Sería buena idea realizar un estudio geoestadístico con series temporales para conocer las zonas de Madrid que necesitan mayor apoyo en determinadas épocas del año.  
+  
+  * Se podría profundizar en el estudio de los efectos del tipo de anomalía y la localización geográfica.  
+ 
+
+
+#Bibliografía  
+
+Dan Vanderkam, JJ Allaire, Jonathan Owen, Daniel Gromer, Petr Shevtsov and Benoit
+  Thieurmel (2017). dygraphs: Interface to 'Dygraphs' Interactive Time Series
+  Charting Library. R package version 1.1.1.4.
+  https://CRAN.R-project.org/package=dygraphs  
+  
+D. Kahle and H. Wickham. ggmap: Spatial Visualization with ggplot2. The R Journal,
+  5(1), 144-161. URL http://journal.r-project.org/archive/2013-1/kahle-wickham.pdf  
+  
+H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York,
+  2009.  
+
+https://www.datanalytics.com/2017/04/24/avisos-recibidos-avisos-resueltos-y-la-creciente-suma-acumulada/  
+
+https://www.r-bloggers.com/batch-geocoding-with-r-and-google-maps/  
+
+https://gis.stackexchange.com/questions/124295/convert-coordinates-from-readshapepoly-in-r-to-long-lat-coordinates  
+
+http://ramiroaznar.com/2015/09/12/how-to-geocode-your-data-with-r/  
+
+https://www.r-bloggers.com/survival-analysis-with-r/  
+
+http://bioconnector.org/workshops/r-survival.html#survival_analysis_in_r  
+
+https://stackoverflow.com/
