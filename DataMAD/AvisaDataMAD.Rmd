@@ -1,5 +1,5 @@
 ---
-title: "An·lisis del conjunto de datos abiertos AVISA del ayuntamiento de
+title: "An√°lisis del conjunto de datos abiertos AVISA del ayuntamiento de
 Madrid"
 author: "Cristina Palomo Garo"
 date: '`r format(Sys.Date(), "%d de %B de %Y")`'
@@ -30,25 +30,25 @@ library(ranger)
 library(ggmap)
 ```
   
-# IntroducciÛn  
+# Introducci√≥n  
 
-## LÌneaMadrid  
-LÌneaMadrid comenzÛ a funcionar en 1999 y depende de la SubdirecciÛn General de AtenciÛn a la CiudadanÌa, Servicio de ImplantaciÛn y Seguimiento.  
-Es el mÈtodo de comunicaciÛn entre los ciudadanos y el Ayuntamiento de Madrid, donde se centralizan diferentes servicios desde la notificaciÛn de desperfectos en el alumbrado, recogida de basuras, entrega y solicitud de impresos... hasta el servicio p˙blico de alquiler de bicicletas BiciMad o el Servicio de Estacionamiento Regulado (SER).  
-Se puede contactar con LÌneaMadrid a travÈs del telÈfono 010 (91 529 82 10 si se llama desde fuera de Madrid), la p·gina web [www.madrid.es/lineamadrid](www.madrid.es/lineamadrid) o incluso Twitter (@Lineamadrid).  
+## L√≠neaMadrid  
+L√≠neaMadrid comenz√≥ a funcionar en 1999 y depende de la Subdirecci√≥n General de Atenci√≥n a la Ciudadan√≠a, Servicio de Implantaci√≥n y Seguimiento.  
+Es el m√©todo de comunicaci√≥n entre los ciudadanos y el Ayuntamiento de Madrid, donde se centralizan diferentes servicios desde la notificaci√≥n de desperfectos en el alumbrado, recogida de basuras, entrega y solicitud de impresos... hasta el servicio p√∫blico de alquiler de bicicletas BiciMad o el Servicio de Estacionamiento Regulado (SER).  
+Se puede contactar con L√≠neaMadrid a trav√©s del tel√©fono 010 (91 529 82 10 si se llama desde fuera de Madrid), la p√°gina web [www.madrid.es/lineamadrid](www.madrid.es/lineamadrid) o incluso Twitter (@Lineamadrid).  
 
 ## Datos abiertos del Ayuntamiento de Madrid 
-En el Portal de datos abiertos del Ayuntamiento de Madrid se puede encontrar el registro de los avisos recibidos por LÌneaMadrid desde el aÒo 2014 hasta la actualidad, aunque existen avisos notificados con anterioridad, pero resueltos a partir de 2014 [Datos abiertos AVISA](http://datos.madrid.es/sites/v/index.jsp?vgnextoid=fd6112695c6bb410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD)  
-Consta de dos datasets en formato .csv, uno recoge todos los avisos recibidos y el otro, los avisos resueltos. La publicaciÛn de los datos se realiza con una periodicidad anual, excepto para el aÒo en curso, cuya publicaciÛn es mensual.  
-Para el presente trabajo, se han unido los datasets de avisos resueltos de 2014, 2015, 2016 y 2017 (hasta agosto) en un dataset al que llamaremos *'recibidos'* y en otro dataset al que llamaremos 'resueltos' los avisos resueltos en 2014, 2015, 2016 y 2017 (hasta agosto). Deduciendo que los avisos sin resolver ser·n aquellos que aparecen en el dataset *'recibidos'* pero no en *'resueltos'* y recogeremos en el dataset 'sinresolver'.  
-En estos datasets se incluye informaciÛn muy extensa:  
+En el Portal de datos abiertos del Ayuntamiento de Madrid se puede encontrar el registro de los avisos recibidos por L√≠neaMadrid desde el a√±o 2014 hasta la actualidad, aunque existen avisos notificados con anterioridad, pero resueltos a partir de 2014 [Datos abiertos AVISA](http://datos.madrid.es/sites/v/index.jsp?vgnextoid=fd6112695c6bb410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD)  
+Consta de dos datasets en formato .csv, uno recoge todos los avisos recibidos y el otro, los avisos resueltos. La publicaci√≥n de los datos se realiza con una periodicidad anual, excepto para el a√±o en curso, cuya publicaci√≥n es mensual.  
+Para el presente trabajo, se han unido los datasets de avisos resueltos de 2014, 2015, 2016 y 2017 (hasta agosto) en un dataset al que llamaremos *'recibidos'* y en otro dataset al que llamaremos 'resueltos' los avisos resueltos en 2014, 2015, 2016 y 2017 (hasta agosto). Deduciendo que los avisos sin resolver ser√°n aquellos que aparecen en el dataset *'recibidos'* pero no en *'resueltos'* y recogeremos en el dataset 'sinresolver'.  
+En estos datasets se incluye informaci√≥n muy extensa:  
 
-  * Tipo de incidencia; si es un aviso, peticiÛn o no conforme  
-  * Canal de entrada; vÌa presencial/telefÛnica, web, app o sugerencias  
-  * Horas de recepciÛn y resoluciÛn (si la hubiere)  
-  * SecciÛn a la que pertenece el aviso  
-  * TipificaciÛn de la anomalÌa  
-  * DirecciÛn  
+  * Tipo de incidencia; si es un aviso, petici√≥n o no conforme  
+  * Canal de entrada; v√≠a presencial/telef√≥nica, web, app o sugerencias  
+  * Horas de recepci√≥n y resoluci√≥n (si la hubiere)  
+  * Secci√≥n a la que pertenece el aviso  
+  * Tipificaci√≥n de la anomal√≠a  
+  * Direcci√≥n  
   * Barrio y distrito donde se localiza el aviso
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
@@ -76,8 +76,8 @@ ID_organismo3 <- read.csv('../res/ID_Organismo3.csv', sep = ',', header = TRUE, 
 ```
 
   
-#An·lisis descriptivo 
-##DescripciÛn del servicio  
+#An√°lisis descriptivo 
+##Descripci√≥n del servicio  
 ### Flujo de comunicaciones
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
@@ -95,25 +95,25 @@ tmp02 <- tmp %>%
   summarise(numero_de_avisos=sum(numero_de_avisos))
 ```
 
-En este servicio se reciben alrededor de 475000 avisos al aÒo.  
+En este servicio se reciben alrededor de 475000 avisos al a√±o.  
 ```{r, echo=FALSE, results='asis'}
-kable(tmp02, col.names = c('aÒo', 'n˙mero de avisos'), format = 'markdown') 
+kable(tmp02, col.names = c('a√±o', 'n√∫mero de avisos'), format = 'markdown') 
 ```
 ---  
 
-Para tener una visiÛn general del flujo de notificaciones, se representa el n˙mero total de avisos durante los casi 4 aÒos de estudio:  
+Para tener una visi√≥n general del flujo de notificaciones, se representa el n√∫mero total de avisos durante los casi 4 a√±os de estudio:  
 ```{r, echo=FALSE}
 tmp <- xts(tmp, order.by = tmp$FECHA_DE_RECEPCION)
 p1 <- dygraph(tmp) %>%
-  dyAxis("y", label = "N˙mero de avisos") %>% 
+  dyAxis("y", label = "N√∫mero de avisos") %>% 
   dyLegend(show = "onmouseover", hideOnMouseOut = TRUE, labelsSeparateLines = TRUE) %>% 
   dyRangeSelector()
 p1 
 ```
   
-Se podrÌa decir que se observa una cierta estacionalidad, con un aumento del n˙mero de avisos durante los meses de julio y septiembre. Aunque el dÌa 30 de marzo de 2016 rompe esta tendencia con un nivel muy alto de avisos, hecho que se explicar· m·s adelante.  
+Se podr√≠a decir que se observa una cierta estacionalidad, con un aumento del n√∫mero de avisos durante los meses de julio y septiembre. Aunque el d√≠a 30 de marzo de 2016 rompe esta tendencia con un nivel muy alto de avisos, hecho que se explicar√° m√°s adelante.  
   
-Si tenemos en cuenta el canal que utilizan los ciudadanos para comunicarse con LÌneaMadrid, la mayoritaria con diferencia es la presencial o telefÛnica, mientras que las dem·s tienen un uso residual.
+Si tenemos en cuenta el canal que utilizan los ciudadanos para comunicarse con L√≠neaMadrid, la mayoritaria con diferencia es la presencial o telef√≥nica, mientras que las dem√°s tienen un uso residual.
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 tmp <- recibidos %>%
   select(CANAL_DE_ENTRADA_ID) %>% 
@@ -125,7 +125,7 @@ p2 <- ggplot(tmp, aes(x = CANAL_DE_ENTRADA, y = numero_de_avisos, fill= CANAL_DE
   geom_bar(stat = 'identity') + scale_fill_brewer(palette = "Blues") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  guides(fill=FALSE)
 p2
 ```
-Respecto a las horas de mayor flujo de comunicaciones, aparece un m·ximo de actividad entre las 8 y las 11 de la maÒana, con una disminuciÛn hasta las 19 horas, donde aparece otro pico, aunque menor. Este patrÛn se repite tanto en los avisos telefÛnicos o presenciales y en los realizados a travÈs de la aplicaciÛn mÛvil.
+Respecto a las horas de mayor flujo de comunicaciones, aparece un m√°ximo de actividad entre las 8 y las 11 de la ma√±ana, con una disminuci√≥n hasta las 19 horas, donde aparece otro pico, aunque menor. Este patr√≥n se repite tanto en los avisos telef√≥nicos o presenciales y en los realizados a trav√©s de la aplicaci√≥n m√≥vil.
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 tmp <- recibidos %>% 
   select(CANAL_DE_ENTRADA_ID, HORA_DE_RECEPCION)
@@ -145,7 +145,7 @@ p3 <- ggplot(tmp, aes(x = Hora, y = numero_de_avisos, group = CANAL_DE_ENTRADA))
 p3
 ```
   
-La mayorÌa de los avisos se reciben los lunes, disminuyendo a lo largo de la semana, y cayendo dr·sticamente durante el fin de semana
+La mayor√≠a de los avisos se reciben los lunes, disminuyendo a lo largo de la semana, y cayendo dr√°sticamente durante el fin de semana
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 tmp <- recibidos %>%
   select(FECHA_DE_RECEPCION, CANAL_DE_ENTRADA_ID, weekday) %>% 
@@ -155,15 +155,15 @@ tmp <- merge(tmp, ID_canal, by = 'CANAL_DE_ENTRADA_ID')
 colnames(tmp)[colnames(tmp) == 'n'] <- 'numero_de_avisos'
 colnames(tmp)[colnames(tmp) == 'weekday'] <- 'dia_de_la_semana'
 
-tmp$dia_de_la_semana <- factor(tmp$dia_de_la_semana, levels = c('lunes', 'martes', 'miÈrcoles', 'jueves', 'viernes', 's·bado', 'domingo'))
+tmp$dia_de_la_semana <- factor(tmp$dia_de_la_semana, levels = c('lunes', 'martes', 'mi√©rcoles', 'jueves', 'viernes', 's√°bado', 'domingo'))
 tmp <- tmp[order(tmp$dia_de_la_semana),]
 p4 <- ggplot(tmp, aes(x = dia_de_la_semana, y = numero_de_avisos, group = CANAL_DE_ENTRADA)) + geom_line(aes(color=CANAL_DE_ENTRADA)) 
 p4
 ```
   
-### LÌnea Madrid en funciÛn de sus servicios  
+### L√≠nea Madrid en funci√≥n de sus servicios  
 
-LÌneaMadrid clasifica los avisos que recibe en secciones y tipo de anomalÌa, para que posteriormente la organizaciÛn adecuada se encargue de solucionarlos. Las secciones m·s demandadas en estos casi 4 aÒos han sido las bicicletas de BiciMad, la recogida de muebles, la limpieza de pintadas, el Servicio de Estacionamiento Regulado SER, entre otras. En el siguiente gr·fico se pueden ver las 11 secciones m·s demandadas:
+L√≠neaMadrid clasifica los avisos que recibe en secciones y tipo de anomal√≠a, para que posteriormente la organizaci√≥n adecuada se encargue de solucionarlos. Las secciones m√°s demandadas en estos casi 4 a√±os han sido las bicicletas de BiciMad, la recogida de muebles, la limpieza de pintadas, el Servicio de Estacionamiento Regulado SER, entre otras. En el siguiente gr√°fico se pueden ver las 11 secciones m√°s demandadas:
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=10}
 tmp <- recibidos %>% 
@@ -177,9 +177,9 @@ g1 <- ggplot(tmp, aes(x = reorder(SECCION, -n), y = n, fill= reorder(SECCION, -n
 g1
 ```
   
-De hecho, las incidencias que recibe el telÈfono 010 sobre el servicio BiciMad, no se resuelven allÌ directamente, sino que son derivadas a otro telÈfono especÌfico.  
-Teniendo en cuenta las 11 secciones con mayor demanda, podemos observar que el servicio de recogida de muebles ha aumentado mucho a lo largo de los aÒos y que las incidencias referentes a la reparaciÛn o reposiciÛn de cubos de basura son abundantes durante todas las Èpocas del aÒo y con unos niveles bastante homogÈneos.  
-Al igual que ocurrÌa con el nivel de avisos totales, aquÌ tambiÈn observamos una cierta estacionalidad. Dependiendo de la Època del aÒo en la que nos encontremos, se reciben m·s avisos de determinada secciÛn, y esta situaciÛn es cÌclica. Por ejemplo, en primavera se reciben m·s avisos referentes a arbolado viario, o m·s avisos sobre zonas verdes y bocas de riego en verano y m·s avisos relacionados con el pavimento en invierno. Parece que Madrid se ve afectada con los cambios de estaciÛn a la vista de estos resultados y podrÌan ser ˙tiles para predecir los efectivos necesarios en cada secciÛn dependiendo de la Època del aÒo
+De hecho, las incidencias que recibe el tel√©fono 010 sobre el servicio BiciMad, no se resuelven all√≠ directamente, sino que son derivadas a otro tel√©fono espec√≠fico.  
+Teniendo en cuenta las 11 secciones con mayor demanda, podemos observar que el servicio de recogida de muebles ha aumentado mucho a lo largo de los a√±os y que las incidencias referentes a la reparaci√≥n o reposici√≥n de cubos de basura son abundantes durante todas las √©pocas del a√±o y con unos niveles bastante homog√©neos.  
+Al igual que ocurr√≠a con el nivel de avisos totales, aqu√≠ tambi√©n observamos una cierta estacionalidad. Dependiendo de la √©poca del a√±o en la que nos encontremos, se reciben m√°s avisos de determinada secci√≥n, y esta situaci√≥n es c√≠clica. Por ejemplo, en primavera se reciben m√°s avisos referentes a arbolado viario, o m√°s avisos sobre zonas verdes y bocas de riego en verano y m√°s avisos relacionados con el pavimento en invierno. Parece que Madrid se ve afectada con los cambios de estaci√≥n a la vista de estos resultados y podr√≠an ser √∫tiles para predecir los efectivos necesarios en cada secci√≥n dependiendo de la √©poca del a√±o
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height= 3, fig.width= 3}
 tmp <- recibidos %>% 
@@ -198,7 +198,7 @@ graficas <- function(seccion){
     filter(SECCION_ID == seccion)
 
 g <- ggplot(tmp, aes(x = FECHA_DE_RECEPCION, y = n, group= SECCION)) + geom_line() + labs(title=tmp$SECCION,
-        x ="Fecha", y = "N˙mero de avisos/dÌa") + theme(plot.title = element_text(size=6)) + scale_x_date()
+        x ="Fecha", y = "N√∫mero de avisos/d√≠a") + theme(plot.title = element_text(size=6)) + scale_x_date()
 print(g)  
 }
 par(mfrow = c(2, 2))
@@ -215,18 +215,18 @@ graficas(59)
 graficas(65)
 ```
   
-TambiÈn en estas gr·ficas se puede observar cÛmo la secciÛn de alumbrado recibe m·s avisos en la Època de otoÒo-invierno, parece normal teniendo en cuenta que es la Època del aÒo con menos horas de luz solar, pero que en los ˙ltimos dos aÒos han disminuido y se han estabilizado el n˙mero de avisos de esta secciÛn. Quiz· se justifique con el hecho de que a partir de 2015 el Ayuntamiento, en una decisiÛn [no exenta de polÈmica actualmente](https://www.elconfidencial.com/espana/madrid/2017-02-16/ana-botella-fiscalia-contrato-bombilla-investigacion_1332613/), comenzara a cambiar las luminarias de la ciudad por otras de tipo LED.  
-Si nos fijamos en la gr·fica correspondiente al vaciado de cubos de basura, podemos observar que, salvo picos puntuales, no es un servicio que demanden demasiado los ciudadanos. øPor quÈ se nos ha _infiltradoo_ entre las 11 secciones m·s demandadas entonces? pues por un pico de m·s de 1000 avisos, muy por encima de lo habitual, ocurrido el 30 de marzo de 2016.  
+Tambi√©n en estas gr√°ficas se puede observar c√≥mo la secci√≥n de alumbrado recibe m√°s avisos en la √©poca de oto√±o-invierno, parece normal teniendo en cuenta que es la √©poca del a√±o con menos horas de luz solar, pero que en los √∫ltimos dos a√±os han disminuido y se han estabilizado el n√∫mero de avisos de esta secci√≥n. Quiz√° se justifique con el hecho de que a partir de 2015 el Ayuntamiento, en una decisi√≥n [no exenta de pol√©mica actualmente](https://www.elconfidencial.com/espana/madrid/2017-02-16/ana-botella-fiscalia-contrato-bombilla-investigacion_1332613/), comenzara a cambiar las luminarias de la ciudad por otras de tipo LED.  
+Si nos fijamos en la gr√°fica correspondiente al vaciado de cubos de basura, podemos observar que, salvo picos puntuales, no es un servicio que demanden demasiado los ciudadanos. ¬øPor qu√© se nos ha _infiltradoo_ entre las 11 secciones m√°s demandadas entonces? pues por un pico de m√°s de 1000 avisos, muy por encima de lo habitual, ocurrido el 30 de marzo de 2016.  
 
-#### øQuÈ pasÛ el 30 de marzo de 2016?  
-Analizando m·s profundamente los avisos de ese dÌa, pr·cticamente todos son reclamaciones de vecinos de la zona noroeste de la ciudad, Barrio del Pilar, PeÒagrande... para que se vacÌen los cubos de basura. "Buceando" en la hemeroteca nos encontramos que en esa fecha los trabajadores de la empresa de recogida de basuras encargada de estos trabajos estaba llevando a cabo una [huelga encubierta](http://www.elmundo.es/madrid/2016/03/31/56fd1700268e3e45228b4689.html).  
+#### ¬øQu√© pas√≥ el 30 de marzo de 2016?  
+Analizando m√°s profundamente los avisos de ese d√≠a, pr√°cticamente todos son reclamaciones de vecinos de la zona noroeste de la ciudad, Barrio del Pilar, Pe√±agrande... para que se vac√≠en los cubos de basura. "Buceando" en la hemeroteca nos encontramos que en esa fecha los trabajadores de la empresa de recogida de basuras encargada de estos trabajos estaba llevando a cabo una [huelga encubierta](http://www.elmundo.es/madrid/2016/03/31/56fd1700268e3e45228b4689.html).  
 
-#### øDÛnde van a parar las bicicletas de BiciMad?  
+#### ¬øD√≥nde van a parar las bicicletas de BiciMad?  
 
-Un hecho en el que se ha querido profundizar, es en el robo y abandono de bicicletas de BiciMad. Aprovechando que los anclajes que sujetan las bicis a las estaciones no funcionan a la perfecciÛn, es habitual la sustracciÛn de estos vehÌculos que suelen ser abandonados en la vÌa p˙blica cuando la baterÌa se acaba o los _usuarios oportunistas_ se cansan de ellas.  
-AquÌ se han cartografiado las localizaciones donde han aparecido repetidas veces (m·s de 3) estas bicicletas. 
+Un hecho en el que se ha querido profundizar, es en el robo y abandono de bicicletas de BiciMad. Aprovechando que los anclajes que sujetan las bicis a las estaciones no funcionan a la perfecci√≥n, es habitual la sustracci√≥n de estos veh√≠culos que suelen ser abandonados en la v√≠a p√∫blica cuando la bater√≠a se acaba o los _usuarios oportunistas_ se cansan de ellas.  
+Aqu√≠ se han cartografiado las localizaciones donde han aparecido repetidas veces (m√°s de 3) estas bicicletas. 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# El proceso para obtener las localizaciones es algo largo, por lo que el cÛdigo se puede consultar en '../src/BiciMad.R'. Al final guardo el resultado en un csv que leo a continuaciÛn:
+# El proceso para obtener las localizaciones es algo largo, por lo que el c√≥digo se puede consultar en '../src/BiciMad.R'. Al final guardo el resultado en un csv que leo a continuaci√≥n:
 tmp <- read.csv('../res/latlon_bicirobada.csv', header = TRUE, fileEncoding = 'latin1')
 
 madrid <- c(lon = -3.702234, lat = 40.48) #coordenadas para madrid
@@ -252,12 +252,12 @@ ggmap(madrid_map03, extent = 'device') +
   geom_point(data = tmp, aes(x = lon, y = lat, size = sqrt(tmp$num_veces)), alpha = .2)
 ```
   
-Estas bicicletas han aparecido en localidades tan alejadas de la almendra central como Las Rozas, AlcorcÛn o Barajas.  
+Estas bicicletas han aparecido en localidades tan alejadas de la almendra central como Las Rozas, Alcorc√≥n o Barajas.  
 
 
 ## Los avisos que quedan sin resolver  
 
-Pese a que de los 1731444 avisos recibidos entre enero de 2014 a julio de 2017 se han quedado sin resolver 133187 (el 7,69%), en la siguiente gr·fica podemos ver la acumulaciÛn de avisos pendientes porque se notifican m·s avisos al dÌa de los que se resuelven en ese mismo dÌa  
+Pese a que de los 1731444 avisos recibidos entre enero de 2014 a julio de 2017 se han quedado sin resolver 133187 (el 7,69%), en la siguiente gr√°fica podemos ver la acumulaci√≥n de avisos pendientes porque se notifican m√°s avisos al d√≠a de los que se resuelven en ese mismo d√≠a  
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 recibidos02 <- recibidos %>% 
@@ -290,11 +290,11 @@ ambos$pendientes <- cumsum(ambos$n.1 - ambos$n)
 
 ambos$FECHA_DE_RECEPCION.1 <- as.Date(ambos$FECHA_DE_RECEPCION.1, format = '%Y-%m-%d')
 tmp <- xts(ambos$pendientes, order.by = ambos$FECHA_DE_RECEPCION.1)
-plot(tmp, main = "Avisos pendientes de resoluciÛn" ,
+plot(tmp, main = "Avisos pendientes de resoluci√≥n" ,
      ylab = "cola de pendientes")
 ```
   
-Y estas son las secciones con m·s avisos pendientes de resolver
+Y estas son las secciones con m√°s avisos pendientes de resolver
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 tmp <- sinresolver %>% 
   select(SECCION_ID) %>% 
@@ -309,18 +309,18 @@ g1 <- ggplot(tmp, aes(x = reorder(SECCION, -n), y = n, fill= reorder(SECCION, -n
 g1
 ```
   
-Existen casos en los que la incidencia se ha resuelto despuÈs de 1975 dÌas abierta, perteneciente a la secciÛn de pavimento, y esa incidencia en cuestiÛn se cerrÛ el mismo dÌa que otras de la misma Ìndole. Es lÛgico agrupar el mismo tipo de incidencias y resolverlas a la vez, y adem·s la soluciÛn a veces pasa por estudios urbanÌsticos o la concesiÛn de permisos... Para ahondar en el tiempo que tardan en resolverse las incidencias, vamos a aplicar modelos estadÌsticos de supervivencia.  
+Existen casos en los que la incidencia se ha resuelto despu√©s de 1975 d√≠as abierta, perteneciente a la secci√≥n de pavimento, y esa incidencia en cuesti√≥n se cerr√≥ el mismo d√≠a que otras de la misma √≠ndole. Es l√≥gico agrupar el mismo tipo de incidencias y resolverlas a la vez, y adem√°s la soluci√≥n a veces pasa por estudios urban√≠sticos o la concesi√≥n de permisos... Para ahondar en el tiempo que tardan en resolverse las incidencias, vamos a aplicar modelos estad√≠sticos de supervivencia.  
 
 
 # Modelos de supervivencia  
 
-Los modelos estadÌsticos de an·lisis de supervivencia se utilizan extensamente en los campos de la medicina y la biologÌa, para ver cÛmo afecta un tratamiento a determinada enfermedad, por ejemplo.  
-AquÌ lo aplicaremos al estudio del tiempo que tardan las incidencias en ser resueltas y cÛmo afectan las diferentes variables a este tiempo de resoluciÛn.  
-La funciÛn de supervivencia indica la probabilidad de que un individuo sobreviva (o que determinado evento no ocurra) y depende del tiempo.  
+Los modelos estad√≠sticos de an√°lisis de supervivencia se utilizan extensamente en los campos de la medicina y la biolog√≠a, para ver c√≥mo afecta un tratamiento a determinada enfermedad, por ejemplo.  
+Aqu√≠ lo aplicaremos al estudio del tiempo que tardan las incidencias en ser resueltas y c√≥mo afectan las diferentes variables a este tiempo de resoluci√≥n.  
+La funci√≥n de supervivencia indica la probabilidad de que un individuo sobreviva (o que determinado evento no ocurra) y depende del tiempo.  
 
-La curva de Kaplan-Meier representa la funciÛn de supervivencia, mostrando la probabilidad de supervivencia acumulada a travÈs del tiempo.  
+La curva de Kaplan-Meier representa la funci√≥n de supervivencia, mostrando la probabilidad de supervivencia acumulada a trav√©s del tiempo.  
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
-# El proceso est· detallado en '../res/supervivencia.R'
+# El proceso est√° detallado en '../res/supervivencia.R'
 resueltos$COORDENADA_OFICIAL_X <- resueltos$COORDENADA_OFICIAL_Y <- resueltos$FECHA_DE_RECEPCION <- resueltos$FECHA_DE_RESOLUCION <- NULL
 resueltos$weekdayResolucion <- resueltos$HORA_DE_RECEPCION <- resueltos$HORA_DE_RESOLUCION <- resueltos$direccion <- NULL
 sinresolver$COORDENADA_OFICIAL_X <- sinresolver$COORDENADA_OFICIAL_Y <- sinresolver$FECHA_DE_RECEPCION <- sinresolver$direccion <- sinresolver$HORA_DE_RECEPCION <- NULL
@@ -343,7 +343,7 @@ kaplan <- Surv(tmp$tiempo, tmp$solucionado)
 fit_kaplan <- survfit(kaplan ~ 1)
 
 ggsurvplot(fit_kaplan, main = 'Kaplan Meyer Plot') + labs(
-  x = "Tiempo (dÌas)",
+  x = "Tiempo (d√≠as)",
   y    = "Probabilidad de no ser resuelta"
 )
 ```
@@ -352,23 +352,23 @@ ggsurvplot(fit_kaplan, main = 'Kaplan Meyer Plot') + labs(
 fit02 <- survfit(Surv(tiempo, solucionado) ~ SECCION, data=tmp)
 ggsurvplot(fit02, pval=TRUE, 
            main="Kaplan-Meier para tiempo de resolucion") + labs(
-             x = "Tiempo (dÌas)",
+             x = "Tiempo (d√≠as)",
              y    = "Probabilidad de no ser resuelta"
            )
 ```
 
-Estudiando m·s a fondo la importancia de cada variable, parece que la que determinar· el tiempo de resoluciÛn de la incidencia ser· el tipo de anomalÌa, seguido de la secciÛn a la que pertenezca. Existe cierta dependencia del lugar donde se haya generado la incidencia, ya que el barrio y el distrito ocupan el tercer y cuarto puesto en importancia respectivamente.  
+Estudiando m√°s a fondo la importancia de cada variable, parece que la que determinar√° el tiempo de resoluci√≥n de la incidencia ser√° el tipo de anomal√≠a, seguido de la secci√≥n a la que pertenezca. Existe cierta dependencia del lugar donde se haya generado la incidencia, ya que el barrio y el distrito ocupan el tercer y cuarto puesto en importancia respectivamente.  
 
 
 # Siguientes pasos  
 
-  * SerÌa buena idea realizar un estudio geoestadÌstico con series temporales para conocer las zonas de Madrid que necesitan mayor apoyo en determinadas Èpocas del aÒo.  
+  * Ser√≠a buena idea realizar un estudio geoestad√≠stico con series temporales para conocer las zonas de Madrid que necesitan mayor apoyo en determinadas √©pocas del a√±o.  
   
-  * Se podrÌa profundizar en el estudio de los efectos del tipo de anomalÌa y la localizaciÛn geogr·fica.  
+  * Se podr√≠a profundizar en el estudio de los efectos del tipo de anomal√≠a y la localizaci√≥n geogr√°fica.  
  
 
 
-#BibliografÌa  
+#Bibliograf√≠a  
 
 [Datos abiertos AVISA](http://datos.madrid.es/sites/v/index.jsp?vgnextoid=fd6112695c6bb410VgnVCM1000000b205a0aRCRD&vgnextchannel=374512b9ace9f310VgnVCM100000171f5a0aRCRD)  
 
@@ -383,7 +383,7 @@ D. Kahle and H. Wickham. ggmap: Spatial Visualization with ggplot2. The R Journa
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York,
   2009.  
   
-[LÌneamadrid](www.madrid.es/lineamadrid) 
+[L√≠neamadrid](www.madrid.es/lineamadrid) 
 
 https://www.datanalytics.com/2017/04/24/avisos-recibidos-avisos-resueltos-y-la-creciente-suma-acumulada/  
 
