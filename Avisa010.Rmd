@@ -215,11 +215,11 @@ graficas(59)
 graficas(65)
 ```
   
-También en estas gráficas se puede observar cómo la sección de alumbrado recibe más avisos en la época de otoño-invierno, parece normal teniendo que es la época del año con menos horas de luz solar, pero que en los últimos dos años han disminuido y se han estabilizado el número de avisos de esta sección. Quizá se justifique con el hecho de que a partir de 2015 el Ayuntamiento, en una decisión [no exenta de polémica actualmente](https://www.elconfidencial.com/espana/madrid/2017-02-16/ana-botella-fiscalia-contrato-bombilla-investigacion_1332613/), comenzara a cambiar las luminarias de la ciudad por otras de tipo LED.  
+También en estas gráficas se puede observar cómo la sección de alumbrado recibe más avisos en la época de otoño-invierno, parece normal teniendo en cuenta que es la época del año con menos horas de luz solar, pero que en los últimos dos años han disminuido y se han estabilizado el número de avisos de esta sección. Quizá se justifique con el hecho de que a partir de 2015 el Ayuntamiento, en una decisión [no exenta de polémica actualmente](https://www.elconfidencial.com/espana/madrid/2017-02-16/ana-botella-fiscalia-contrato-bombilla-investigacion_1332613/), comenzara a cambiar las luminarias de la ciudad por otras de tipo LED.  
 Si nos fijamos en la gráfica correspondiente al vaciado de cubos de basura, podemos observar que, salvo picos puntuales, no es un servicio que demanden demasiado los ciudadanos. ¿Por qué se nos ha _colado_ entre las 11 secciones más demandadas entonces? pues por un pico de más de 1000 avisos, muy por encima de lo habitual, ocurrido el 30 de marzo de 2016.  
 
 #### ¿Qué pasó el 30 de marzo de 2016?  
-Analizando más profundamente los avisos de ese día, prácticamente todos son reclamaciones de vecinos de la zona noroeste de la ciudad, Barrio del Pilar, Peñagrande... para que se vacíen los cubos de basura. "Buceando" en la hemeroteca nos encontramos que esa fecha los trabajadores de la empresa de recogida de basuras encargada de estos trabajos, estaba llevando a cabo una [huelga encubierta](http://www.elmundo.es/madrid/2016/03/31/56fd1700268e3e45228b4689.html).  
+Analizando más profundamente los avisos de ese día, prácticamente todos son reclamaciones de vecinos de la zona noroeste de la ciudad, Barrio del Pilar, Peñagrande... para que se vacíen los cubos de basura. "Buceando" en la hemeroteca nos encontramos que en esa fecha los trabajadores de la empresa de recogida de basuras encargada de estos trabajos estaba llevando a cabo una [huelga encubierta](http://www.elmundo.es/madrid/2016/03/31/56fd1700268e3e45228b4689.html).  
 
 #### ¿Dónde van a parar las bicicletas de BiciMad?  
 
@@ -245,7 +245,7 @@ madrid_map02 <- get_map(madrid02, maptype = 'roadmap', zoom = 13)
 ggmap(madrid_map02, extent = 'device') +
   geom_point(data = tmp, aes(x = lon, y = lat, size = sqrt(tmp$num_veces)), alpha = .2)
 
-madrid03 <- c(lon = -3.702234, lat = 40.4) #coordenadas para madrid
+madrid03 <- c(lon = -3.702234, lat = 40.40) #coordenadas para madrid
 madrid_map03 <- get_map(madrid03, maptype = 'roadmap', zoom = 13) 
 
 ggmap(madrid_map03, extent = 'device') +
@@ -309,12 +309,12 @@ g1 <- ggplot(tmp, aes(x = reorder(SECCION, -n), y = n, fill= reorder(SECCION, -n
 g1
 ```
   
-Existen casos en los que la incidencia se ha resuelto después de 1975 días abierta, perteneciente a la sección de pavimento, y esa incidencia en cuestión se cerró el mismo días que otras de la mismo índole. Es lógico agrupar el mismo tipo de incidencias y resolverlas a la vez, y además la solución a veces pasa por estudios urbanísticos o la concesión de permisos... Para ahondar en el tiempo que tardan en resolverse las incidencias, vamos a aplicar modelos estadísticos de supervivencia.  
+Existen casos en los que la incidencia se ha resuelto después de 1975 días abierta, perteneciente a la sección de pavimento, y esa incidencia en cuestión se cerró el mismo día que otras de la misma índole. Es lógico agrupar el mismo tipo de incidencias y resolverlas a la vez, y además la solución a veces pasa por estudios urbanísticos o la concesión de permisos... Para ahondar en el tiempo que tardan en resolverse las incidencias, vamos a aplicar modelos estadísticos de supervivencia.  
 
 
 # Modelos de supervivencia  
 
-Los modelos estadísticos de análisis de supervivencia se utilizan extensamente en los campos de la medicina y la biología, para el estudio de la mortalidad entre distintas mutaciones del mismo tipo de cáncer y cómo afecta determinado tratamiento a esa mortalida, si determinada población es más vulnerable a una enfermedad, o incluso en viabilidad de plantas o propagación de semillas.  
+Los modelos estadísticos de análisis de supervivencia se utilizan extensamente en los campos de la medicina y la biología, para el estudio de la mortalidad entre distintas mutaciones del mismo tipo de cáncer y cómo afecta determinado tratamiento a esa mortalidad, si determinada población es más vulnerable a una enfermedad, o incluso en viabilidad de plantas o propagación de semillas.  
 Aquí lo aplicaremos al estudio del tiempo que tardan las incidencias en ser resueltas y cómo afectan las diferentes variables a este tiempo de resolución.  
 La función de supervivencia indica la probabilidad de que un individuo sobreviva (o que determinado evento no ocurra) y depende del tiempo  
 Lo primero que debemos hacer es clasificar nuestras incidencias en resueltas con un 1 (lo que en supervivencia sería un individuo fallecido), o si siguen abiertas y sin resolverse, con un 0 (es decir, que sobreviven). 
