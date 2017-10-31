@@ -177,7 +177,7 @@ g1 <- ggplot(tmp, aes(x = reorder(SECCION, -n), y = n, fill= reorder(SECCION, -n
 g1
 ```
   
-De hecho, las incidencias que recibe el teléfono 010 sobre el servicio BiciMad, no se resuelven allí directamente, si no que son derivadas a otro teléfono específico.  
+De hecho, las incidencias que recibe el teléfono 010 sobre el servicio BiciMad, no se resuelven allí directamente, sino que son derivadas a otro teléfono específico.  
 Teniendo en cuenta las 11 secciones con mayor demanda, podemos observar que el servicio de recogida de muebles ha aumentado mucho a lo largo de los años y que las incidencias referentes a la reparación o reposición de cubos de basura son abundantes durante todas las épocas del año y con unos niveles bastante homogéneos.  
 Al igual que ocurría con el nivel de avisos totales, aquí también observamos una cierta estacionalidad. Dependiendo de la época del año en la que nos encontremos, se reciben más avisos de determinada sección, y esta situación es cíclica. Por ejemplo, en primavera se reciben más avisos referentes a arbolado viario, o más avisos sobre zonas verdes y bocas de riego en verano y más avisos relacionados con el pavimento en invierno. Parece que Madrid se ve afectada con los cambios de estación a la vista de estos resultados y podrían ser útiles para predecir los efectivos necesarios en cada sección dependiendo de la época del año
 
